@@ -1,0 +1,49 @@
+body {
+    font: 1.5em; 
+    font-size: 1.5em;
+    background:#222;
+    background-color:#222;
+    color: azure;
+    height: 100%;
+    font-family:'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;   
+    height:100%;
+    margin:0px;
+    padding:0px;
+    width:100%;
+}
+
+html {
+    height:100%;
+}
+
+#appname {
+    text-align: center;
+    color: lightslategrey;
+    font: 1em;
+}
+
+#container {
+    width:90%;
+    height:85%;
+    display: block;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+#geo {
+    height: 50%;
+    width: 95%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#status {
+    height: 50%;
+    width: 95%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <meta charset="UTF-8"> 
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        <title>Rednoize Radar v2</title>
+    </head>
+    <body>
+        <div id="appname">Rednoize Radar v2.05</div>
+        <div id="container">
+            <div id="geo">
+                <div v-if="geo.working">
+                        <b>GPS работает</b><br/>
+                        - широта: {{ geo.lat }} <br/>
+                        - долгота:  {{ geo.lon }} <br/>
+                        - скорость:  {{ geo.spd }} <br/>
+                        - точность: {{ geo.acc }}
+                </div>
+                <div v-else>
+                        <b>GPS не работает</b><br/>
+                        <span v-show="geo.error">- причина: {{ geo.error }} </span> 
+                </div>
+            </div>
+            <div id="status">
+                <div v-if="net.connect">
+                    <b>Соединение установлено</b><br/>
+                    - отправлено: {{ net.sent }}<br/>
+                    <span v-show="net.listeners > 0">- наблюдателей: {{net.listeners}}</span>
+                </div>
+                <div v-else>
+                        <b>Соединение разорвано</b><br/>
+                        <span v-show="net.error">- причина: {{ net.error }}</span>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" src="js/vue.js"></script>
+        <script type="text/javascript" src="js/protobuf.js"></script>
+        <script type="text/javascript" src="js/paho-mqtt.js"></script>
+        <script type="text/javascript" src="js/utils.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="cordova.js"></script>
+    </body>
+</html>

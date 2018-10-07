@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+    <script src="leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script> 
+    <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font: 16pt Helvetica, Arial;
+          background-color: black;
+          color: azure;
+          height: 100%;
+        }
+
+        html {
+          height: 100%;
+        }
+
+        #info {
+          padding-left: 2.5%;
+          padding-top: 1%;
+          padding-bottom: 1%;
+        }
+
+        #mapid {
+          height: 80%;
+          width: 95%;
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        #footer_txt {
+          text-transform: uppercase;
+          color: #999;
+          line-height: 19px;
+          font-size: 12px;
+          text-align: center;
+        }
+        </style>
+    <script src="paho-mqtt.js"></script>
+    <script src="protobuf.min.js"></script>
+    <script src="proto.js"></script>
+    <script src="index.js"></script>
+  </head>
+  <body>
+    <div id="info">Загружаемся и подключаемся к серверу...</div>
+    <div id="mapid"></div>
+    <div id="footer_txt">
+    2012-2018&nbsp;&copy;&nbsp;Rednoize&nbsp;&nbsp;
+  </body>
+</html>
+

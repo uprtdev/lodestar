@@ -1,0 +1,6 @@
+npm-debug.log
+/node_modules
+
+/www/paho*
+/www/proto*
+/www/leaflet*
