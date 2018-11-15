@@ -6,14 +6,14 @@ window.onerror = function (msg, url, lineNo, columnNo, errorObj) {
 
 function onDeviceReady () {
   var updater = new StatusUpdater()
-  var sender = new NetworkSender('tcp://xxx.xxx.com', 1883, updater, undefined, undefined)
+  var sender = new NetworkSender('somedomain.org', 8090, updater)
   var observer = new LocationObserver(sender, updater)
 
   sender.connect()
   observer.initialize()
 
   cordova.plugins.backgroundMode.setDefaults({
-    title: 'Rednoize Radar v1.3',
+    title: 'Rednoize Radar v2.2',
     text: 'This app should be foreground to work correctly',
     color: 'F14F4D'
   })
@@ -115,7 +115,9 @@ var StatusUpdater = function () {
     connect: false,
     error: '',
     sent: 0,
-    listeners: null
+    received: 0,
+    retr: 0,
+    observers: null
   }
   this.geo = {
     working: false,
@@ -136,9 +138,13 @@ var StatusUpdater = function () {
   })
 
   this.updateNet = function (newState) {
+    var received = self.net.received
     var sent = self.net.sent
+    var retr = self.net.retr
     Object.assign(self.net, newState)
+    if (newState.received) { self.net.received += received }
     if (newState.sent) { self.net.sent += sent }
+    if (newState.retr) { self.net.retr += retr }
   }
 
   this.updateGeo = function (newState) {
@@ -146,7 +152,7 @@ var StatusUpdater = function () {
   }
 }
 
-var NetworkSender = function (addr, port, stateUpdater, clientId, uname, upass) {
+var NetworkSender = function (addr, port, stateUpdater) {
   var self = this
   this.socketId = null
   this.addr = addr
@@ -154,133 +160,141 @@ var NetworkSender = function (addr, port, stateUpdater, clientId, uname, upass) 
   this.stateUpdater = stateUpdater
   this.sentTime = null
   this.sentCounter = 0
-  this.uname = uname
-  this.upass = upass
-  this.clientId = clientId
+
+  self.maxRetrsPerPeriod = 3
+
+  this.retransmitTimer = null
+  this.retransmitTimeout = null
 
   this.lastDataUpdate = null
   this.dataUpdatesAvgInterval = 0
+  this.lastPing = null
+  this.pingAvg = 0
   this.lastPacket = null
   this.lastPacketSeq = 0
 
-  this.pbRoot = null
-  protobuf.load('protobuf/navi.proto', function (err, root) {
-    if (err) {
-      throw err
-    } else {
-      self.pbRoot = root
-      self.clientMessage = root.lookupType('DataUpdateMessageToClient')
-    }
-  })
-
   this.connect = function () {
-    console.log('Connecting...')
-    try {
-      cordova.plugins.CordovaMqTTPlugin.connect({
-        url: self.addr,
-        port: self.port,
-        wsPort: 9001,
-        clientId: self.clientId,
-        connectionTimeout: 3000,
-        reconnect: true,
-        isBinaryPayload: false,
-        username: self.uname,
-        password: self.upass,
-        keepAlive: 10,
-        success: function (s) {
+    chrome.sockets.udp.create({}, function callback (i) {
+      self.socketId = i.socketId
+      chrome.sockets.udp.bind(i.socketId, '0.0.0.0', 0, function callback (r) {
+        if (r === 0) {
           self.stateUpdater.updateNet({
             connect: true,
             error: ''
           })
-          cordova.plugins.CordovaMqTTPlugin.listen('$SYS/broker/clients/connected', function (payload, params) {
-            var listeners = parseInt(payload, 10) - 1
-            self.stateUpdater.updateNet({
-              listeners: listeners
-            })
-          })
-          cordova.plugins.CordovaMqTTPlugin.subscribe({
-            topic: '$SYS/broker/clients/connected',
-            qos: 0,
-            success: function (s) {},
-            error: function (e) {}
-          })
-        },
-        error: function (e) {
-          console.log('Connection error', e)
+        } else {
           self.stateUpdater.updateNet({
             connect: false,
-            error: JSON.stringify(e)
-          })
-          setTimeout(self.connect, 1000)
-        },
-        onConnectionLost: function () {
-          console.log('Connection lost')
-          self.stateUpdater.updateNet({
-            error: 'Connection lost',
-            connect: false
+            error: r.result
           })
         }
       })
-    } catch (err) {
+    })
+
+    chrome.sockets.udp.onReceive.addListener(function (i) {
+      var ping = null
+      var view = new DataView(i.data)
+      var data = {
+        seq: view.getUint8(0),
+        w: view.getUint8(1)
+      }
+      if (data.seq === (self.lastPacketSeq % 255)) {
+        self.cancelRetransmitTimer()
+        ping = new Date().getTime() - self.sentTime.getTime()
+        if (self.lastPing) { self.pingAvg = (self.lastPing + ping) / 2 }
+        self.lastPing = ping
+      }
       self.stateUpdater.updateNet({
-        connect: false,
-        error: err
+        connect: true,
+        error: '',
+        received: 1,
+        ping: ping,
+        observers: data.w
       })
-      setTimeout(self.connect, 1000)
-    }
+    })
+
+    chrome.sockets.udp.onReceiveError.addListener(function (r) {
+      self.stateUpdater.updateNet({
+        error: r.result,
+        connect: false
+      })
+      chrome.sockets.udp.setPaused(self.socketId, false)
+    })
   }
 
   this.sendData = function (newGeoData) {
     if (self.lastDataUpdate) { self.dataUpdatesAvgInterval = (new Date().getTime() - self.lastDataUpdate + self.dataUpdatesAvgInterval) / (self.dataUpdatesAvgInterval ? 2 : 1) }
     self.lastDataUpdate = new Date().getTime()
+    self.stateUpdater.updateNet({
+      retr: 0
+    })
 
     var carId = 1
     var data = {
-      lon: newGeoData.working ? newGeoData.lon : 0,
-      lat: newGeoData.working ? newGeoData.lat : 0,
-      spd: newGeoData.working ? Math.trunc(newGeoData.spd) : 0,
-      c: carId,
-      seq: self.sentCounter,
+      lon: newGeoData.lon,
+      lat: newGeoData.lat,
+      spd: Math.trunc(newGeoData.spd),
       q: newGeoData.working ? 0 : 1
+
     }
 
-    var err = self.clientMessage.verify(data)
-    if (err) {
-      alert(err)
-    } else {
-      var buffer = self.clientMessage.encode(data).finish().slice().buffer
-      self.sendPacket(buffer)
-    }
+    var buffer = new ArrayBuffer(17)
+    var view = new DataView(buffer)
+    view.setFloat32(0, data.lon, false)
+    view.setFloat32(4, data.lat, false)
+    view.setUint8(8, data.spd)
+    view.setUint8(9, carId)
+    view.setUint8(10, data.q)
+    view.setUint16(11, self.sentCounter, false)
+    // 4 more bytes are reserved for the future
+    self.lastPacket = buffer
+    self.lastPacketSeq = self.sentCounter
+    self.sendPacket(buffer)
   }
 
   this.sendPacket = function (buffer) {
-    try {
-      cordova.plugins.CordovaMqTTPlugin.publish({
-        topic: 'Pos',
-        payload: buffer,
-        qos: 0,
-        retain: false,
-        success: function (s) {
+    if (self.socketId !== null) {
+      chrome.sockets.udp.send(self.socketId, buffer, self.addr, self.port, function (r) {
+        if (r.resultCode === 0) {
+          self.sentCounter++
           self.stateUpdater.updateNet({
             sent: 1,
             error: ''
           })
-        },
-        error: function (e) {
+          self.resetRetransmitTimer()
+        } else {
           self.stateUpdater.updateNet({
-            error: e
+            error: r.resultCode
           })
         }
       })
-      self.sentCounter++
-    } catch (err) {
-      self.stateUpdater.updateNet({
-        connect: false,
-        error: err
-      })
-      alert(err)
+      self.sentTime = new Date()
     }
-    self.sentTime = new Date()
+  }
+
+  this.retransmit = function () {
+    if (self.lastPacket) { self.sendPacket(self.lastPacket) }
+  }
+
+  this.cancelRetransmitTimer = function () {
+    if (self.retransmitTimer) { clearTimeout(self.retransmitTimer) }
+  }
+
+  this.resetRetransmitTimer = function () {
+    self.cancelRetransmitTimer()
+    if (self.dataUpdatesAvgInterval > 0 && self.pingAvg > 0) {
+      var now = new Date().getTime()
+      var left = self.dataUpdatesAvgInterval - (now - self.lastDataUpdate)
+      var timeout = Math.max(self.dataUpdatesAvgInterval / self.maxRetrsPerPeriod, self.pingAvg)
+      if (left > timeout) {
+        self.retransmitTimer = setTimeout(function () {
+          self.stateUpdater.updateNet({
+            retr: 1
+          })
+          self.retransmit()
+        }, timeout)
+      }
+    }
   }
 }
 

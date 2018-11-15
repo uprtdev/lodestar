@@ -29,5 +29,5 @@
     <plugin name="at.gofg.sportscomputer.powermanagement" spec="https://github.com/Viras-/cordova-plugin-powermanagement.git" />
     <engine name="android" spec="^7.1.2" />
     <engine name="browser" spec="^5.0.4" />
-    <plugin name="cordova-plugin-mqtt" spec="https://github.com/uprt/cordova-plugin-mqtt.git" />
+    <plugin name="cordova-plugin-chrome-apps-sockets-udp" spec="https://github.com/MobileChromeApps/cordova-plugin-chrome-apps-sockets-udp" />
 </widget>

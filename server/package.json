@@ -6,15 +6,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "leaflet": "cp ./node_modules/leaflet/dist/leaflet.js ./www/ && cp ./node_modules/leaflet/dist/leaflet.css ./www/",
-    "proto": "cp ./node_modules/protobufjs/dist/minimal/protobuf.min.js ./www/ && ./node_modules/protobufjs/bin/pbjs ../common/navi.proto --target static-module -w closure -o ./www/proto.js && cp ../common/navi.proto ./bin/",
-    "paho": "cp ./node_modules/paho-client/src/paho-mqtt.js ./www/",
-    "build": "npm run leaflet && npm run proto && npm run paho"
+    "build": "npm run leaflet"
   },
   "author": "Kirill",
   "license": "ISC",
   "dependencies": {
     "leaflet": "^1.3.4",
-    "paho-client": "git+https://github.com/eclipse/paho.mqtt.javascript.git",
-    "protobufjs": "^6.8.8",
+     "ws": "^6.0.0"
   }
 }

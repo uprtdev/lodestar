@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function (event) {
-  console.log('Rednoize Web Radar, v1.3')
+  console.log('Rednoize Web Radar, v2.2')
+  console.log('Данный говнокод был набросан Кириллом в обеденный перерыв на работе во имя процветания уфимского энкаунтера ^_^')
   var map = new TrackingMap('mapid', [54.744773, 55.988830])
   var updater = new DataUpdater(map, document.getElementById('info'))
-  var listener = new ServerListener('xxx.xxx.com', 9001,
+  var listener = new ServerListener('ws://somedomain.org/ws',
     updater.showConnected,
     updater.updateData,
     updater.showConnectError)
@@ -10,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
 })
 
 function TrackingMap (mapDiv, defaultCoords) {
-  console.log('Creating map...')
+  console.log('Создаем карту...')
 
   var MapBox = L.tileLayer('/tiles/{id}/{z}/{x}/{y}.png32', {
     maxZoom: 18,
@@ -106,84 +107,80 @@ function DataUpdater (map, infoDiv) {
         if (self.lastData.coords) { map.markerG.setLatLng([self.lastData.coords.lon, self.lastData.coords.lat]) }
       }
       if (self.lastData.state.isValid) {
-        self.infoDiv.innerHTML = '- долгота: ' + Math.round(self.lastData.coords.lon * 100000) / 100000 + /* longtitude */
-                ', <br/>- широта: ' + Math.round(self.lastData.coords.lat * 100000) / 100000 + /* latitude */
-                ', <br/>- скорость: ' + self.lastData.coords.spd + ' км/ч, <br/>- обновлено: ' + fromUpd /* speed; last update */
+        self.infoDiv.innerHTML = '- долгота: ' + Math.round(self.lastData.coords.lon * 100000) / 100000 + ', <br/>- широта: ' + Math.round(self.lastData.coords.lat * 100000) / 100000 + ', <br/><!-- - скорость: ' + self.lastData.coords.spd + ' км/ч, <br/> -->- обновлено: ' + fromUpd
         self.map.map.setView([self.lastData.coords.lon, self.lastData.coords.lat], map.map.getZoom())
       }
     } else {
       self.map.marker.setLatLng([0, 0])
       self.map.markerG.setLatLng([0, 0])
-      if (self.lastData && self.lastData.state.isAgentOnline) { self.infoDiv.innerHTML = 'Ожидаем данные местоположения от объекта...<br/><br/><br/>' } /* waiting for data from the object */
-      else { self.infoDiv.innerHTML = 'Ожидаем установления связи с объектом...<br/><br/><br/>' } /* waiting for establishing connection with the object */
+      if (self.lastData && self.lastData.state.isAgentOnline) { self.infoDiv.innerHTML = 'Ожидаем данные местоположения от объекта...<br/><br/><br/>' } else { self.infoDiv.innerHTML = 'Ожидаем установления связи с объектом...<br/><br/><br/>' }
     }
   }
 };
 
-function ServerListener (url, port, onconnect, ondata, onerror) {
+function ServerListener (url, onconnect, ondata, onerror) {
   this.timeoutTimer = null
+  this.socket = null
   this.url = url
-  this.port = port
 
   var self = this
 
-  var clientId = 'brwsr' + parseInt(Math.random() * 1000000, 10)
-  this.client = new Paho.Client(this.url, Number(this.port), clientId)
-
   this.decodeData = function (data) {
-    var parsedData = null
-    try {
-      var view = protobuf.roots.default.DataUpdateMessageToClient.decode(data)
-      var coords = {
-        lat: view.lon,
-        lon: view.lat,
-        spd: view.spd,
-        seq: view.seq
-      }
-      var state = {
-        updated: new Date(),
-        isValid: view.q === 0,
-        isAgentOnline: view.q === 0 || view.q === 2
-      }
-      parsedData = {
-        coords: coords,
-        state: state
-      }
-    } catch (e) {
-      console.log(e)
+    var view = new DataView(data)
+    var coords = {
+      lat: view.getFloat32(0, false),
+      lon: view.getFloat32(4, false),
+      spd: view.getUint8(8),
+      q: view.getUint8(10),
+      seq: view.getUint16(11, false)
+    }
+    var state = {
+      updated: new Date(),
+      isValid: coords.q === 0,
+      isAgentOnline: coords.q === 0 || coords.q === 1
+    }
+    var parsedData = {
+      coords: coords,
+      state: state
     }
     return parsedData
   }
 
-  this.client.onConnectionLost = function (responseObject) {
-    console.log('Connection lost')
-    console.log('Code: ' + responseObject.errorCode + ' reason: ' + responseObject.errorMessage)
-    onerror()
+  this.clearNoDataTimeout = function () {
+    if (self.timeoutTimer) { clearTimeout(self.timeoutTimer) }
   }
 
-  this.client.onMessageArrived = function (message) {
-    console.log(message.payloadBytes)
-    if (message.payloadBytes !== undefined) {
-      var data = self.decodeData(new Uint8Array(message.payloadBytes))
-      if (data) {
-        ondata(data)
-      }
-    }
+  this.setNoDataTimeout = function () {
+    self.clearNoDataTimeout()
+    self.timeoutTimer = setTimeout(() => self.socket.close(), 12500)
   }
 
   this.connect = function () {
-    self.client.connect({
-      onSuccess: function () {
-        console.log('Connection established.')
-        onconnect()
-        self.client.subscribe('Pos')
-      },
-      onFailure: function (context, errorCode, errorMessage) {
-        console.log(errorMessage + ' (' + errorCode + ')')
-      },
-      mqttVersion: 4,
-      reconnect: true,
-      keepAliveInterval: 10
-    })
+    self.socket = new WebSocket(self.url)
+    self.socket.binaryType = 'arraybuffer'
+
+    self.socket.onopen = function () {
+      console.log('Соединение установлено.')
+      onconnect()
+      self.setNoDataTimeout()
+    }
+
+    self.socket.onclose = function (event) {
+      if (event.wasClean) {
+        console.log('Соединение закрыто чисто')
+      } else {
+        console.log('Обрыв соединения')
+      }
+      console.log('Код: ' + event.code + ' причина: ' + event.reason)
+      onerror()
+      setTimeout(self.connect, 1000)
+      self.clearNoDataTimeout()
+    }
+    self.socket.onmessage = function (event) {
+      var data = self.decodeData(event.data)
+      console.log(JSON.stringify(data))
+      self.setNoDataTimeout()
+      ondata(data)
+    }
   }
 };

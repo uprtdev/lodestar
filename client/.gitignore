@@ -13,6 +13,4 @@ npm-debug.log
 resources/signing
 
 #genereated or copied files
-/www/protobuf/
-/www/js/proto*
 /www/js/vue*
