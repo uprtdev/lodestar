@@ -1,12 +1,13 @@
+window.lastErrors = []
 window.onerror = function (msg, url, lineNo, columnNo, errorObj) {
   var file = url.substring(url.lastIndexOf('/') + 1)
   var message = '[' + file + '] ' + lineNo + '.' + columnNo + ' : ' + msg.toString()
-  this.alert(message)
+  window.lastErrors.push(message)
 }
 
-function onDeviceReady () {
+function startTheDance (config) {
   var updater = new StatusUpdater()
-  var sender = new NetworkSender('somedomain.org', 8090, updater)
+  var sender = new NetworkSender(config.addr, config.port, updater, config.id)
   var observer = new LocationObserver(sender, updater)
 
   sender.connect()
@@ -38,7 +39,35 @@ function onDeviceReady () {
     window.plugins.insomnia.keepAwake()
   })
   cordova.plugins.backgroundMode.on('deactivate', function () {})
-};
+}
+function saveAll (config) {
+  localStorage.setItem('radarConfig', JSON.stringify(config))
+}
+
+function onDeviceReady () {
+  var config = localStorage.getItem('radarConfig')
+  if (!config) {
+    config = {
+      addr: 'radar.rednoize.su',
+      port: 8090,
+      id: 1
+    }
+  } else {
+    config = JSON.parse(config)
+  };
+  new Vue({
+    el: '#initialView',
+    data: {
+      config: config,
+      settsOpen: true,
+      hidePreloader: true
+    },
+    methods: {
+      save: saveAll.bind(this, config),
+      start: startTheDance.bind(this, config)
+    }
+  })
+}
 
 var LocationObserver = function (networkSender, stateUpdater) {
   var self = this
@@ -130,10 +159,12 @@ var StatusUpdater = function () {
   }
 
   new Vue({
-    el: '#container',
+    el: '#workingView',
     data: {
       net: self.net,
-      geo: self.geo
+      geo: self.geo,
+      errs: window.lastErrors,
+      started: true
     }
   })
 
@@ -152,7 +183,7 @@ var StatusUpdater = function () {
   }
 }
 
-var NetworkSender = function (addr, port, stateUpdater) {
+var NetworkSender = function (addr, port, stateUpdater, id) {
   var self = this
   this.socketId = null
   this.addr = addr
@@ -160,6 +191,8 @@ var NetworkSender = function (addr, port, stateUpdater) {
   this.stateUpdater = stateUpdater
   this.sentTime = null
   this.sentCounter = 0
+
+  this.carId = id
 
   self.maxRetrsPerPeriod = 3
 
@@ -229,7 +262,6 @@ var NetworkSender = function (addr, port, stateUpdater) {
       retr: 0
     })
 
-    var carId = 1
     var data = {
       lon: newGeoData.lon,
       lat: newGeoData.lat,
@@ -249,7 +281,7 @@ var NetworkSender = function (addr, port, stateUpdater) {
     var view = new DataView(buffer)
 
     view.setUint8(0, data.q)
-    view.setUint8(1, carId)
+    view.setUint8(1, self.carId)
     view.setUint16(2, self.sentCounter, false)
     if (fullPacket) {
       view.setFloat32(4, data.lon, false)
@@ -268,12 +300,14 @@ var NetworkSender = function (addr, port, stateUpdater) {
           self.sentCounter++
           self.stateUpdater.updateNet({
             sent: 1,
-            error: ''
+            error: '',
+            connect: true
           })
           self.resetRetransmitTimer()
         } else {
           self.stateUpdater.updateNet({
-            error: r.resultCode
+            error: r.resultCode,
+            connect: false
           })
         }
       })

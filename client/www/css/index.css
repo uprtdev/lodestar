@@ -12,6 +12,22 @@ body {
     width:100%;
 }
 
+input, button {
+    font: 1em;
+    font-size: 1em;
+    width:85%;
+    background:#555;
+    background-color:#555;
+    color: azure;
+    font-family:'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;
+    border-radius: 8px;
+    border:1px solid #888;
+    margin-left: auto;
+    margin-right: auto;
+    padding-right: 5px;
+    padding-left: 5px;
+}
+
 html {
     height:100%;
 }
@@ -22,7 +38,7 @@ html {
     font: 1em;
 }
 
-#container {
+#firstView, #initialView {
     width:90%;
     height:85%;
     display: block;
@@ -31,7 +47,7 @@ html {
     margin-left: auto;
     margin-right: auto;
 }
-#geo {
+#geo, #status {
     height: 50%;
     width: 95%;
     display: block;
@@ -39,11 +55,31 @@ html {
     margin-right: auto;
 }
 
-#status {
-    height: 50%;
-    width: 95%;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+#errs {
+    font-size: small;
+    color: darkred;
 }
 
+[v-cloak] {
+    display: none;
+}
+
+#loader {
+    border: 16px solid #737373; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 0.5s linear infinite;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    text-align: center;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

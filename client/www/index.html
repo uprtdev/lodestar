@@ -10,7 +10,24 @@
     </head>
     <body>
         <div id="appname">Rednoize Radar v2.2</div>
-        <div id="container">
+        <div id="initialView" v-show="!hidePreloader || settsOpen">
+            <div id="loader" v-show="!hidePreloader"></div>
+            <div id="settings" style="display: none" v-show="settsOpen">
+                <div>Адрес сервера:</div>
+                <div><input v-model.trim="config.addr" placeholder=""></div>
+                <div>Порт:</div>
+                <div><input type="number" v-model="config.port" placeholder="" maxlength="5" size="5" max="65535"></div><br/>
+                <div>ID объекта:</div>
+                <div><input type="number" v-model="config.id" placeholder="" maxlength="2" size="2" max="254"></div><br/><br/>
+                <button v-on:click="settsOpen = false; save(config); start(config)"> Начать работу </button>
+            </div>
+        </div>
+        <div id="workingView" style="display: none" v-show="started">
+            <div id="errs">
+                <li v-for="item in errs" v-on:click="errs.splice(0, errs.length)">
+                    {{ item }}
+                </li>
+            </div>
             <div id="geo">
                 <div v-if="geo.working">
                         <b>GPS работает</b><br/>
@@ -26,7 +43,7 @@
             </div>
             <div id="status">
                 <div v-if="net.connect">
-                    <b>Соединение установлено</b><br/>
+                    <b>Соединение норм</b><br/>
                     - отправлено: {{ net.sent }}<br/>
                     - получено: {{ net.received }}<br/>
                     - ретрансмиссий: {{ net.retr }}<br/>
