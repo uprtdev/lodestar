@@ -125,14 +125,28 @@ function ServerListener (url, onconnect, ondata, onerror) {
 
   var self = this
 
+  this.seq = 0
+
   this.decodeData = function (data) {
     var view = new DataView(data)
-    var coords = {
-      lat: view.getFloat32(0, false),
-      lon: view.getFloat32(4, false),
-      spd: view.getUint8(8),
-      q: view.getUint8(10),
-      seq: view.getUint16(11, false)
+    var q = view.getUint8(0)
+    var coords = {}
+    if (q === 0) {
+      coords = {
+        lat: view.getFloat32(2, false),
+        lon: view.getFloat32(6, false),
+        spd: view.getUint8(10),
+        q: q,
+        seq: self.seq
+      }
+    } else {
+      coords = {
+        lat: null,
+        lon: null,
+        spd: null,
+        q: q,
+        seq: self.seq
+      }
     }
     var state = {
       updated: new Date(),
@@ -181,6 +195,7 @@ function ServerListener (url, onconnect, ondata, onerror) {
       console.log(JSON.stringify(data))
       self.setNoDataTimeout()
       ondata(data)
+      self.seq++
     }
   }
 };

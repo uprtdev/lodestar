@@ -27,7 +27,8 @@ const Emitter = function (port) {
     lon: 0,
     lat: 0,
     spd: 0,
-    c: 2
+    c: 1,
+    q: 2
   }
 
   console.log('Emitter listening on ' + port)
@@ -41,14 +42,21 @@ const Emitter = function (port) {
   }
 
   this.encodeData = function (data) {
-    const buffer = new ArrayBuffer(13)
+    const fullPacket = (data.q === 0)
+    let buffer = null
+    if (fullPacket) {
+      buffer = new ArrayBuffer(11)
+    } else {
+      buffer = new ArrayBuffer(2)
+    }
     const view = new DataView(buffer)
-    view.setFloat32(0, data.lon)
-    view.setFloat32(4, data.lat)
-    view.setUint8(8, data.spd)
-    view.setUint8(9, data.c)
-    view.setUint8(10, data.q)
-    view.setUint16(11, self.seqCounter)
+    view.setUint8(0, data.q)
+    view.setUint8(1, data.c)
+    if (fullPacket) {
+      view.setFloat32(2, data.lon)
+      view.setFloat32(6, data.lat)
+      view.setUint8(10, data.spd)
+    }
     self.seqCounter++
     return buffer
   }
@@ -88,9 +96,9 @@ const Receiver = function (emitter, port) {
   })
 
   this.server.on('message', function (msg, remote) {
-    console.log('Message from ' + remote.address + ':' + remote.port + ' - ' + msg.length)
     const data = self.decodeData(msg)
     if (data) {
+      console.log('Message from ' + remote.address + ':' + remote.port + ' - ' + msg.length + ': ' + data.c + '/' + data.q + '/' + data.senderSeq)
       if (data.senderSeq > self.lastReceivedSeq) { self.emitter.broadcast(data) }
       self.lastReceivedSeq = data.senderSeq
       const buffer = new Buffer.alloc(2)
@@ -99,20 +107,40 @@ const Receiver = function (emitter, port) {
       self.server.send(buffer, 0, buffer.length, remote.port, remote.address, function (err, bytes) {
         if (err) console.log('Failed to send reply: ' + err.toString())
       })
+    } else {
+      console.log('Message from ' + remote.address + ':' + remote.port + ' - ' + msg.length + ': something went wrong')
     };
   })
 
   this.server.bind(port, '0.0.0.0')
 
-  this.decodeData = function (view) {
+  this.decodeData = function (buf) {
     try {
-      const data = {
-        lon: view.readFloatBE(0),
-        lat: view.readFloatBE(4),
-        spd: view.readUInt8(8),
-        c: view.readUInt8(9),
-        q: view.readUInt8(10),
-        senderSeq: view.readUInt16BE(11)
+      if (buf.length !== 4 && buf.length !== 13) {
+        console.log('Got data from agent, wrong packet length!')
+        return null
+      }
+
+      const q = buf.readUInt8(0)
+      let data = null
+      if (q === 0) {
+        data = {
+          q: q,
+          c: buf.readUInt8(1),
+          lon: buf.readFloatBE(4),
+          lat: buf.readFloatBE(8),
+          spd: buf.readUInt8(12),
+          senderSeq: buf.readUInt16BE(2)
+        }
+      } else {
+        data = {
+          lon: null,
+          lat: null,
+          spd: null,
+          q: q,
+          c: buf.readUInt8(1),
+          senderSeq: buf.readUInt16BE(2)
+        }
       }
 
       if (data.q === 0 && (isNaN(data.lon) || isNaN(data.lat))) {

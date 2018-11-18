@@ -238,15 +238,24 @@ var NetworkSender = function (addr, port, stateUpdater) {
 
     }
 
-    var buffer = new ArrayBuffer(17)
+    var fullPacket = (data.q === 0)
+    var buffer = null
+    if (fullPacket) {
+      buffer = new ArrayBuffer(13)
+    } else {
+      buffer = buffer = new ArrayBuffer(4)
+    }
+
     var view = new DataView(buffer)
-    view.setFloat32(0, data.lon, false)
-    view.setFloat32(4, data.lat, false)
-    view.setUint8(8, data.spd)
-    view.setUint8(9, carId)
-    view.setUint8(10, data.q)
-    view.setUint16(11, self.sentCounter, false)
-    // 4 more bytes are reserved for the future
+
+    view.setUint8(0, data.q)
+    view.setUint8(1, carId)
+    view.setUint16(2, self.sentCounter, false)
+    if (fullPacket) {
+      view.setFloat32(4, data.lon, false)
+      view.setFloat32(8, data.lat, false)
+      view.setUint8(12, data.spd)
+    }
     self.lastPacket = buffer
     self.lastPacketSeq = self.sentCounter
     self.sendPacket(buffer)
