@@ -166,7 +166,7 @@ function ServerListener (url, onconnect, ondata, onerror) {
 
   this.setNoDataTimeout = function () {
     self.clearNoDataTimeout()
-    self.timeoutTimer = setTimeout(() => self.socket.close(), 12500)
+    self.timeoutTimer = setTimeout(function() {self.socket.close(); }, 12500);
   }
 
   this.connect = function () {
