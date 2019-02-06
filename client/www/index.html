@@ -13,13 +13,13 @@
         <div id="initialView" v-show="!hidePreloader || settsOpen">
             <div id="loader" v-show="!hidePreloader"></div>
             <div id="settings" style="display: none" v-show="settsOpen">
-                <div>Адрес сервера:</div>
+                <div>Server address:</div>
                 <div><input v-model.trim="config.addr" placeholder=""></div>
-                <div>Порт:</div>
+                <div>Port:</div>
                 <div><input type="number" v-model="config.port" placeholder="" maxlength="5" size="5" max="65535"></div><br/>
-                <div>ID объекта:</div>
+                <div>Object ID:</div>
                 <div><input type="number" v-model="config.id" placeholder="" maxlength="2" size="2" max="254"></div><br/><br/>
-                <button v-on:click="settsOpen = false; save(config); start(config)"> Начать работу </button>
+                <button v-on:click="settsOpen = false; save(config); start(config)"> Start </button>
             </div>
         </div>
         <div id="workingView" style="display: none" v-show="started">
@@ -30,34 +30,37 @@
             </div>
             <div id="geo">
                 <div v-if="geo.working">
-                        <b>GPS работает</b><br/>
-                        - широта: {{ geo.lat }} <br/>
-                        - долгота:  {{ geo.lon }} <br/>
-                        - скорость:  {{ geo.spd }} <br/>
-                        - точность: {{ geo.acc }}
+                        <b>GPS works</b><br/>
+                        - latitude: {{ geo.lat }} <br/>
+                        - longitude:  {{ geo.lon }} <br/>
+                        - speed:  {{ geo.spd }} <br/>
+                        - accuracy: {{ geo.acc }}
                 </div>
                 <div v-else>
-                        <b>GPS не работает</b><br/>
-                        <span v-show="geo.error">- причина: {{ geo.error }} </span> 
+                        <b>GPS doesn't work</b><br/>
+                        <span v-show="geo.error">- reason: {{ geo.error }} </span>
                 </div>
             </div>
             <div id="status">
                 <div v-if="net.connect">
-                    <b>Соединение норм</b><br/>
-                    - отправлено: {{ net.sent }}<br/>
-                    - получено: {{ net.received }}<br/>
-                    - ретрансмиссий: {{ net.retr }}<br/>
-                    - пинг: {{ net.ping }}<br/>
-                    - наблюдателей: {{net.observers}}
+                    <b>Connection is okay</b><br/>
+                    - sent: {{ net.sent }}<br/>
+                    - received: {{ net.received }}<br/>
+                    - retransmissions: {{ net.retr }}<br/>
+                    - ping: {{ net.ping }}<br/>
+                    - observers: {{net.observers}}
                 </div>
                 <div v-else>
-                        <b>Соединение разорвано</b><br/>
-                        <span v-show="net.error">- причина: {{ net.error }}</span>
+                        <b>Connection was interrupted</b><br/>
+                        <span v-show="net.error">- reason: {{ net.error }}</span>
                 </div>
             </div>
         </div>
         <script type="text/javascript" src="js/vue.js"></script>
         <script type="text/javascript" src="js/utils.js"></script>
+        <script type="text/javascript" src="js/location_observer.js"></script>
+        <script type="text/javascript" src="js/network_sender.js"></script>
+        <script type="text/javascript" src="js/status_updater.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript" src="cordova.js"></script>
     </body>

@@ -1,6 +1,6 @@
 {
-  "name": "rz-navi",
-  "version": "1.0.0",
+  "name": "lodestar",
+  "version": "2.3.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,9 +9,9 @@
     "build": "npm run leaflet"
   },
   "author": "Kirill",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "leaflet": "^1.3.4",
-     "ws": "^6.0.0"
+    "ws": "^6.0.0"
   }
 }

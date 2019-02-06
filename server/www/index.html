@@ -11,24 +11,20 @@
           padding: 0;
           box-sizing: border-box;
         }
-
         body {
           font: 16pt Helvetica, Arial;
           background-color: black;
           color: azure;
           height: 100%;
         }
-
         html {
           height: 100%;
         }
-
         #info {
           padding-left: 2.5%;
           padding-top: 1%;
           padding-bottom: 1%;
         }
-
         #mapid {
           height: 80%;
           width: 95%;
@@ -36,7 +32,6 @@
           margin-left: auto;
           margin-right: auto;
         }
-
         #footer_txt {
           text-transform: uppercase;
           color: #999;
@@ -45,10 +40,12 @@
           text-align: center;
         }
         </style>
+    <script src="data_updater.js"></script>
+    <script src="listener.js"></script>
     <script src="index.js"></script>
   </head>
   <body>
-    <div id="info">Загружаемся и подключаемся к серверу...</div>
+    <div id="info">Initializing and connecting to the server...</div>
     <div id="mapid"></div>
     <div id="footer_txt">
     2012-2018&nbsp;&copy;&nbsp;Rednoize&nbsp;&nbsp;

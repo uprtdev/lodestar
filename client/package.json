@@ -1,7 +1,7 @@
 {
     "name": "su.rednoize.navidro",
-    "displayName": "RzNaviDro",
-    "version": "1.3.0",
+    "displayName": "Lodestar",
+    "version": "2.3.0",
     "description": "Stupid GPS tracker as it is.",
     "main": "index.js",
     "scripts": {
@@ -10,7 +10,7 @@
         "icon": "./node_modules/cordova-icon/bin/cordova-icon --icon=./res/ico.png",
         "build": "npm run vue && npm run icon && cordova build android"
     },
-    "author": "Apache Cordova Team",
+    "author": "Kirill",
     "license": "Apache-2.0",
     "dependencies": {
         "at.gofg.sportscomputer.powermanagement": "https://github.com/Viras-/cordova-plugin-powermanagement.git",
