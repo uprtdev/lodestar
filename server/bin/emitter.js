@@ -8,7 +8,7 @@ class Emitter {
     this.seqCounter = 0
     this.activeUsers = 0
     this.timeoutTimer = null
-    this.server.on('connection', this.handleConnect)
+    this.server.on('connection', (ws) => { this.handleConnect(ws) })
     this.resetTimeout()
     console.log(`Emitter listening on ${port}`)
   }

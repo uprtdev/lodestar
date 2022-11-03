@@ -10,7 +10,7 @@ class Receiver {
       console.log(`UDP Server listening on ${this.server.address().address} :${port}`)
     })
 
-    this.server.on('message', this.handleMessage)
+    this.server.on('message', (msg, remote) => { this.handleMessage(msg, remote) })
     this.server.bind(port, '0.0.0.0')
   }
 
@@ -24,7 +24,7 @@ class Receiver {
       this.lastReceivedSeq = data.senderSeq
       const buffer = new Buffer.alloc(2)
       buffer.writeUInt8(data.senderSeq % 0xFF, 0)
-      buffer.writeUInt8(emitter.activeUsers > 255 ? 255 : emitter.activeUsers, 1)
+      buffer.writeUInt8(this.emitter.activeUsers > 255 ? 255 : this.emitter.activeUsers, 1)
       this.server.send(buffer, 0, buffer.length, remote.port, remote.address, (err, bytes) => {
         if (err) console.log(`Failed to send reply: ${err.toString()}`)
       })
