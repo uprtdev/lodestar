@@ -14,8 +14,8 @@
     "license": "Apache-2.0",
     "dependencies": {
         "at.gofg.sportscomputer.powermanagement": "https://github.com/Viras-/cordova-plugin-powermanagement.git",
-        "cordova-android": "^7.1.2",
-        "cordova-browser": "^5.0.4",
+        "cordova-android": "^11.0.0",
+        "cordova-browser": "^6.0.0",
         "cordova-icon": "^1.0.0",
         "cordova-plugin-background-mode": "git+https://github.com/tushe/cordova-plugin-background-mode.git",
         "cordova-plugin-chrome-apps-common": "^1.0.7",
