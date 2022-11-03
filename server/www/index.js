@@ -1,7 +1,7 @@
-const connectURL = 'ws://somedomain.org/ws' // in case of running without reverse-proxy, it could be like 'ws://somedomain.org:8089'
+const connectURL = (window.location.protocol != "https:" ? "ws://" : "wss://") + location.hostname + "/ws"
 
 window.addEventListener('load', function (event) {
-  console.log('Rednoize Web Radar, v2.2')
+  console.log('Rednoize Web Radar, v2.2.1')
   var map = new TrackingMap('mapid', [54.744773, 55.988830])
   var updater = new DataUpdater(map, document.getElementById('info'))
   var listener = new ServerListener(connectURL,
@@ -14,20 +14,21 @@ window.addEventListener('load', function (event) {
 function TrackingMap (mapDiv, defaultCoords) {
   console.log('Creating map...')
 
-  const mapsUrl = '/tiles/{id}/{z}/{x}/{y}.png32' // use this for local-cached mapbox
-  // const mapsUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' // use this for default maps from OSM servers
+  const mapsUrl = '/tiles/{s}/{z}/{x}/{y}'
   var MapBox = L.tileLayer(mapsUrl, {
-    maxZoom: 18,
-    minZoom: 15,
+    maxZoom: 19,
+    minZoom: 16,
+// You may need to uncomment this if you are using Mapbox tiles and text labels are very small
+//    tileSize: 1024,
+//    zoomOffset: -2,
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
-            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-            'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
     id: 'mapbox.streets'
   })
 
   var LeafIcon = L.Icon.extend({
     options: {
-      iconSize: [32, 32]
+      iconSize: [48, 48]
     }
   })
 
@@ -38,7 +39,7 @@ function TrackingMap (mapDiv, defaultCoords) {
     iconUrl: 'target-g.png'
   })
 
-  this.map = L.map(mapDiv).setView(defaultCoords, 17)
+  this.map = L.map(mapDiv).setView(defaultCoords, 18)
   this.marker = L.marker([0, 0], {
     icon: carIconB
   }).addTo(this.map)
