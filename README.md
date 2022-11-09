@@ -16,10 +16,28 @@ In the second version, I switched to a custom binary UDP-based protocol, that al
 The mobile client is written in HTML/JS with [Apache Cordova](https://cordova.apache.org/) framework, and [Vue.js](https://vuejs.org/) for the interface.
 The backend uses NodeJS.
 The frontend uses [leaflet](https://leafletjs.com/) library to render the map, with Mapbox tiles (actually, Mapbox can be easily switched to OpenStreetMap).
-I also use [Nginx](https://nginx.org/) as a reverse-proxy to    static HTML/JS/CSS files, redirect Websockets connections to backend port, and to cache map tiles.
+I also use [Nginx](https://nginx.org/) as a reverse-proxy to serve static HTML/JS/CSS files, redirect Websockets connections to backend port and to cache map tiles.
 
 ## How to build and start
-Config:
+### Backend:
+
+The prefered way is to use docker, but you can also build and install it manually.
+
+Docker approach will download NodeJS and all npm dependencies and start the app, It will also download Nginx and use pre-defined configuration for caching and websocket proxying.
+
+First, git clone everything to your local filesystem. Then,
+
+    $ cd server
+    # edit docker-compose.yml file, you nay need to change the HTTP or client port for example
+    # edit nginx/default.conf file, e.g. to use OSM or Mapbox, and specify your token if you are using Mapbox
+    $ docker-compose up -d
+
+Wait for a while, after it you will have a web server up and running.
+
+Nginx configuration and HTML files are mounted to the docker as "bind mounts" so that you can make any changes you need in them (e.g. add TLS configuration into Nginx, or change some styles in HTML files).
+
+Manual set up:
+
 in 'server/bin/index.js' specify the ports for receiving clients' data and for WS connections from the front-end:
 
     const  emitterPort  =  8089
@@ -27,28 +45,29 @@ in 'server/bin/index.js' specify the ports for receiving clients' data and for W
 
 in 'server/www/index.js' put you domain/ip-port to 'connectURL'  constant
 
-    const  connectURL  =  'ws://somedomain.org/ws'  // in case of running without reverse-proxy, it could be like 'ws://somedomain.org:8089'
+    const connectURL = (window.location.protocol != "https:" ? "ws://" : "wss://") + location.host + "/ws"
 
-And that is all, actually. The client's connection address will be requested after client's start.
+If you don't use Nginx as reverse-proxy, you may need to remove "/ws" postfix but add a port number to the 'location.host' instead. If you want to use Nginx, refer to 'server/nginx/default.conf' as a configuration example.
+If you don't want to use Nginx, you can serve static content  using any web server like node ['static-server'](https://www.npmjs.com/package/static-server) or even [python](https://docs.python.org/2/library/simplehttpserver.html).
 
 Server build and start:
 
     $ cd server/bin
     $ npm install
-    $ npm run build // this will make some preparations
-and then
+
+You will also need to download leaflet.js and lealet.css from Leaflet website or any CDN mirror and place it into 'server/www' directory.
+
+And then
 
     $ node ./index.js
 
-or you can install 'forever' (npm --install-g    forever) and start backend using 
+or you can install 'forever' (npm --install-g forever) and start backend using 
 
     $ ./start.sh
 
 script.
-I also recommend to use Nginx as a reverse proxy, see 'server/nginx.site.conf' as a reference.
-If you don't want to use Nginx, you can serve static content  using any web server like node ['static-server'](https://www.npmjs.com/package/static-server) or even [python](https://docs.python.org/2/library/simplehttpserver.html).
 
-Client build and start:
+### Client:
 
     $ sudo npm install -g cordova
     $ cd client

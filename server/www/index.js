@@ -1,4 +1,4 @@
-const connectURL = (window.location.protocol != "https:" ? "ws://" : "wss://") + location.hostname + "/ws"
+const connectURL = (window.location.protocol != "https:" ? "ws://" : "wss://") + location.host + "/ws"
 
 window.addEventListener('load', function (event) {
   console.log('Rednoize Web Radar, v2.2.1')
