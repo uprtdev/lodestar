@@ -13,32 +13,6 @@ function startTheDance (config) {
   sender.connect()
   observer.initialize()
 
-  cordova.plugins.backgroundMode.setDefaults({
-    title: 'Rednoize Radar v2.2',
-    text: 'This app should be foreground to work correctly',
-    color: 'F14F4D'
-  })
-
-  cordova.plugins.backgroundMode.enable()
-  cordova.plugins.backgroundMode.overrideBackButton()
-
-  window.powerManagement.acquire(function () {
-    console.log('Wakelock acquired')
-  }, function () {
-    console.log('Failed to acquire wakelock')
-  })
-  window.powerManagement.setReleaseOnPause(false, function () {
-    console.log('Set successfully')
-  }, function () {
-    console.log('Failed to set')
-  })
-  window.plugins.insomnia.keepAwake()
-
-  cordova.plugins.backgroundMode.on('activate', function () {
-    cordova.plugins.backgroundMode.disableWebViewOptimizations()
-    window.plugins.insomnia.keepAwake()
-  })
-  cordova.plugins.backgroundMode.on('deactivate', function () {})
 }
 function saveAll (config) {
   localStorage.setItem('radarConfig', JSON.stringify(config))

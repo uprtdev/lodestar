@@ -18,16 +18,8 @@
     <allow-intent href="geo:*" />
     <platform name="android">
         <allow-intent href="market:*" />
-    </platform>
-    <platform name="ios">
-        <allow-intent href="itms:*" />
-        <allow-intent href="itms-apps:*" />
+        <preference name="android-minSdkVersion" value="27" />
     </platform>
     <plugin name="cordova-plugin-geolocation" spec="^4.0.1" />
-    <plugin name="cordova-plugin-insomnia" spec="https://github.com/EddyVerbruggen/Insomnia-PhoneGap-Plugin.git" />
-    <plugin name="cordova-plugin-background-mode" spec="https://github.com/tushe/cordova-plugin-background-mode.git" />
-    <plugin name="at.gofg.sportscomputer.powermanagement" spec="https://github.com/Viras-/cordova-plugin-powermanagement.git" />
-    <engine name="android" spec="^7.1.2" />
-    <engine name="browser" spec="^5.0.4" />
     <plugin name="cordova-plugin-chrome-apps-sockets-udp" spec="https://github.com/MobileChromeApps/cordova-plugin-chrome-apps-sockets-udp" />
 </widget>

@@ -69,10 +69,11 @@ script.
 
 ### Client:
 
+    $ sudo apt install gradle
     $ sudo npm install -g cordova
     $ cd client
     $ npm install
-    $ npm run build // this will make some preparations
+    $ npm run prepare // this will make some preparations
     $ cordova platform add android
     $ cordova requirements
 
@@ -87,32 +88,29 @@ Install dependencies:
 Additionally you'll need Android SDK and Android Platforms. You can install them manually, but I prefer using [Android Studio](https://developer.android.com/studio), because it also helps with debugging:
 unzip Android studio, cd bin, run ./studio.sh
 Go to 
-Android Studio -> Preferences -> Appearance & Behavior -> System Settings -> Android SDK, select "Platform 27" and install it.
-If the ANDROID_HOME environment variable is not set, set it manuall
+Android Studio -> Tools -> SDK Manager, select required SDK version and install it.
+If the ANDROID_HOME environment variable is not set, set it manually
 
     $ export ANDROID_HOME=/home/user/Android/Sdk/
+    $ export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools/
+    $ export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/
+    $ export PATH=$PATH:$ANDROID_SDK_ROOT/emulator/
 
-If you dont' have Gradle, install it from the repo or official website:
-
-    $ sudo apt install gradle
-
-After that check that everything is present:
+After that check again that everything is present:
 
     $ cordova requirements
 
+If something is not okay, refer to [Cordova Android documantation](https://cordova.apache.org/docs/en/11.x/guide/platforms/android/) for setup instructions.
+
 and run
 
-    $ cordova build
+    $ cordova build android
 
-It will generate an unsigned debug   .apk in 'platforms/android/app/build/outputs/apk/debug/' that is enought for debugging and personal use. Generating signed release .apk is a special question, please refer to Cordova official manual and StackOverflow for it :)
+It will generate an unsigned debug .apk file in 'platforms/android/app/build/outputs/apk/debug/' that is enough for debugging and personal use. Generating signed release .apk is a special question, please refer to Cordova official manual and StackOverflow for it :)
 
-If you see the message 
-"Failed to restore plugin "cordova-plugin-background-mode" from config.xml. You might need to try adding it again. Error: code: engine.platform or engine.scriptSrc is not defined in custom engine "windows-sdk" from plugin "cordova-plugin-background-mode" for android warn"
-just delete the following line in plugin.xml
-&lt;engine name="windows-sdk" version=">=10.0.14393.0" /&gt;
-and then add this plugin again:
-
-    $ cordova plugin add cordova-plugin-background-mode
+## Known issues
+It doesn't send any data when the app is in the background or the screen is off - these are the limitation of Android platform. Well, it used to work some time ago (in the epoch of Android ~6) and I used a number of Cordova plugins for it (like insomnia, power-management, etc.), but it doesn't work as expected now. 
 
 ## Todo
+- Try to use [cordova-plugin-background-geolocation](https://github.com/mauron85/cordova-plugin-background-geolocation) to fix the sleep issue
 - Support multiple objects on the map. Client already has "object ID" setting, and the protocol includes a field for it, but front-end can't draw more than one point for now.
